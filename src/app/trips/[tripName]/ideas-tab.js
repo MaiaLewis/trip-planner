@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import AddQuestionModal from './AddQuestionModal'
+import AddQuestionModal from './add-question-modal'
 import { getSurveyQuestions, updateVote } from '@/utils/sheets'
 import UserAvatar from '@/app/components/UserAvatar'
 

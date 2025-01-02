@@ -3,9 +3,9 @@
 import { useState, use } from 'react'
 import { useSession } from 'next-auth/react'
 import { redirect, useSearchParams } from 'next/navigation'
-import IdeasTab from './IdeasTab'
-import PlanTab from './PlanTab'
-import ShareTripModal from './ShareTripModal'
+import IdeasTab from './ideas-tab'
+import PlanTab from './plan-tab'
+import ShareTripModal from './share-trip-modal'
 
 export default function TripPage({ params }) {
   const { data: session, status } = useSession()

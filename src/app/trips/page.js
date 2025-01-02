@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation'
 import { getTrips } from '@/utils/sheets'
 import AddTripModal from './add-trip-form'
 import Link from 'next/link'
+import Image from 'next/image'
+import UserAvatar from '@/app/components/user-avatar'
 
 export default function TripsPage() {
   const { data: session, status } = useSession()
@@ -30,6 +32,7 @@ export default function TripsPage() {
     if (session?.accessToken) {
       getTrips(session.accessToken)
         .then(fetchedTrips => {
+          console.log('Fetched trips:', fetchedTrips)
           setTrips(fetchedTrips)
           setIsLoading(false)
         })
@@ -42,7 +45,7 @@ export default function TripsPage() {
   }, [session])
 
   if (status === 'loading') {
-    return <div>Loading...</div>
+    return <div className="text-gray-500">Loading...</div>
   }
 
   if (status === 'unauthenticated') {
@@ -69,21 +72,47 @@ export default function TripsPage() {
         <div>Loading trips...</div>
       ) : trips.length > 0 ? (
         <ul className="mb-8 space-y-2">
-          {trips.map((trip) => (
-            <li key={trip.id}>
-              <Link 
-                href={`/trips/${encodeURIComponent(trip.name)}?id=${trip.id}`}
-                className="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
-              >
-                <div className="flex justify-between items-center">
-                  <span>{trip.name}</span>
-                  <span className="text-sm text-gray-500">
-                    {trip.isOwner ? 'Owner' : 'Shared'}
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
+          {trips.map((trip) => {
+            console.log('Trip data:', trip)
+            return (
+              <li key={trip.id}>
+                <Link 
+                  href={`/trips/${encodeURIComponent(trip.name)}?id=${trip.id}`}
+                  className="block p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-center">
+                    <span>{trip.name}</span>
+                    <div className="flex items-center">
+                      <div className="flex -space-x-2 mr-2">
+                        {/* Show owner first */}
+                        {trip.owner && (
+                          <div className="relative" title={`Owner: ${trip.owner.name}`}>
+                            <UserAvatar name={trip.owner.name} />
+                          </div>
+                        )}
+                        {/* Show shared users */}
+                        {trip.sharedWith?.map((user) => (
+                          <div
+                            key={user.email}
+                            className="relative"
+                            title={user.name}
+                          >
+                            <UserAvatar name={user.name}/>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Show count if there are more users */}
+                      {trip.sharedWith && trip.sharedWith.length > 3 && (
+                        <span className="text-sm text-gray-500">
+                          +{trip.sharedWith.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              </li>
+            )
+          })}
         </ul>
       ) : (
         <p className="text-gray-600 mb-8">No trips yet. Create your first trip!</p>

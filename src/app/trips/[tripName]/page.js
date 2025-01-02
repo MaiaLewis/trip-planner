@@ -13,7 +13,7 @@ export default function TripPage({ params }) {
   const searchParams = useSearchParams()
   const spreadsheetId = searchParams.get('id')
   const [isShareModalOpen, setIsShareModalOpen] = useState(false)
-  
+
   if (status === 'loading') {
     return <div>Loading...</div>
   }
@@ -26,46 +26,49 @@ export default function TripPage({ params }) {
   const tripName = decodeURIComponent(tripParams.tripName)
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">{tripName}</h1>
-        
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setIsShareModalOpen(true)}
-            className="px-4 py-2 text-blue-500 border border-blue-500 rounded-lg hover:bg-blue-50"
-          >
-            Share
-          </button>
-          <nav className="flex space-x-4 bg-white p-2 rounded-lg">
+    <div>
+      <div className="sticky top-0 z-50 bg-white border-b px-8 pt-4">
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-lg font-bold">{tripName}</h1>
+
+          <div className="flex items-center space-x-4">
             <button
-              onClick={() => setActiveTab('ideas')}
-              className={`
-                px-4 py-2 rounded-md font-medium text-sm
-                ${activeTab === 'ideas'
-                  ? 'bg-gray-300 text-gray-900'
-                  : 'text-gray-500 hover:text-gray-700'}
-              `}
+              onClick={() => setIsShareModalOpen(true)}
+              className="px-4 py-2 text-blue-500 border border-blue-500 rounded-lg hover:bg-blue-50"
             >
-              Ideas
+              Share
             </button>
-            <button
-              onClick={() => setActiveTab('plan')}
-              className={`
-                px-4 py-2 rounded-md font-medium text-sm
-                ${activeTab === 'plan'
-                  ? 'bg-gray-300 text-gray-900'
-                  : 'text-gray-500 hover:text-gray-700'}
-              `}
-            >
-              Plan
-            </button>
-          </nav>
+
+          </div>
         </div>
+        <nav className="flex space-x-4 bg-white">
+          <button
+            onClick={() => setActiveTab('ideas')}
+            className={`
+                px-4 py-2 text-sm
+                ${activeTab === 'ideas'
+                ? 'font-bold border-b-2 border-blue-500 text-gray-900'
+                : 'text-gray-500 hover:text-gray-700'}
+                `}
+          >
+            Ideas
+          </button>
+          <button
+            onClick={() => setActiveTab('plan')}
+            className={`
+                px-4 py-2 text-sm
+                ${activeTab === 'plan'
+                ? 'font-bold border-b-2 border-blue-500 text-gray-900'
+                : 'text-gray-500 hover:text-gray-700'}
+                `}
+          >
+            Plan
+          </button>
+        </nav>
       </div>
 
       {/* Tab content */}
-      <div className="mt-8">
+      <div className="m-8">
         {activeTab === 'ideas' ? (
           <IdeasTab spreadsheetId={spreadsheetId} />
         ) : (
@@ -73,7 +76,7 @@ export default function TripPage({ params }) {
         )}
       </div>
 
-      <ShareTripModal 
+      <ShareTripModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         spreadsheetId={spreadsheetId}

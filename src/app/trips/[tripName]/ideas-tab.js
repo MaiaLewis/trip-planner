@@ -82,24 +82,16 @@ export default function IdeasTab({ spreadsheetId }) {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Trip Survey</h2>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center"
-        >
-          <span className="mr-2">+</span> Question
-        </button>
-      </div>
+
 
       {isLoading ? (
-        <div>Loading questions...</div>
+        <div className="text-gray-500">Loading...</div>
       ) : error ? (
         <div className="text-red-500">{error}</div>
       ) : questions.length > 0 ? (
         <div className="space-y-6">
           {questions.map((q, index) => (
-            <div key={index} className="bg-white p-4 rounded-lg shadow">
+            <div key={index} className="bg-gray-100 p-4 rounded-lg text-sm">
               <h3 className="font-medium mb-3">{q.question}</h3>
               <div className="space-y-2 pl-4">
                 {q.options.map((option, optIndex) => (
@@ -132,9 +124,23 @@ export default function IdeasTab({ spreadsheetId }) {
               </div>
             </div>
           ))}
+          <button
+          onClick={() => setIsModalOpen(true)}
+          className="text-sm text-blue-500 font-bold hover:text-blue-600 flex items-center"
+        >
+          <span className="mr-2">+</span> Question
+        </button>
         </div>
       ) : (
-        <p className="text-gray-600">No questions yet. Add your first question!</p>
+        <div>
+        <p className="text-gray-600 py-6">No questions yet. Add your first question!</p>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="text-sm text-blue-500 font-bold hover:text-blue-600 flex items-center"
+        >
+          <span className="mr-2">+</span> Question
+        </button>
+        </div>
       )}
 
       <AddQuestionModal 

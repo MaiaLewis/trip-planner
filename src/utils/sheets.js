@@ -2,7 +2,7 @@ export async function getTrips(accessToken) {
   try {
     // First get owned trips
     const ownedResponse = await fetch(
-      'https://www.googleapis.com/drive/v3/files?q=name contains "Trip Planner" and mimeType="application/vnd.google-apps.spreadsheet"',
+      'https://www.googleapis.com/drive/v3/files?q=name contains "Trip Planner" and mimeType="application/vnd.google-apps.spreadsheet"&fields=files(id,name,owners,permissions)',
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -12,7 +12,7 @@ export async function getTrips(accessToken) {
 
     // Then get shared trips
     const sharedResponse = await fetch(
-      'https://www.googleapis.com/drive/v3/files?q=mimeType="application/vnd.google-apps.spreadsheet" and sharedWithMe',
+      'https://www.googleapis.com/drive/v3/files?q=mimeType="application/vnd.google-apps.spreadsheet" and sharedWithMe&fields=files(id,name,owners,permissions)',
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -25,21 +25,36 @@ export async function getTrips(accessToken) {
       sharedResponse.json()
     ]);
 
-    const ownedTrips = ownedData.files
-      .filter(file => file.name.startsWith('Trip Planner - '))
-      .map(file => ({
+    const processTrip = (file, isOwner) => {
+      const owner = file.owners?.[0] || null;
+      const sharedWith = file.permissions
+        ?.filter(p => p.role === 'writer' && p.type === 'user' && p.emailAddress !== owner.emailAddress)
+        .map(p => ({
+          email: p.emailAddress,
+          name: p.displayName || p.emailAddress,
+          image: `https://www.googleapis.com/drive/v3/files/${p.photoLink || ''}`
+        })) || [];
+
+      return {
         id: file.id,
         name: file.name.replace('Trip Planner - ', ''),
-        isOwner: true
-      }));
+        isOwner,
+        owner: owner ? {
+          email: owner.emailAddress,
+          name: owner.displayName || owner.emailAddress,
+          image: owner.photoLink
+        } : null,
+        sharedWith
+      };
+    };
+
+    const ownedTrips = ownedData.files
+      .filter(file => file.name.startsWith('Trip Planner - '))
+      .map(file => processTrip(file, true));
 
     const sharedTrips = sharedData.files
       .filter(file => file.name.startsWith('Trip Planner - '))
-      .map(file => ({
-        id: file.id,
-        name: file.name.replace('Trip Planner - ', ''),
-        isOwner: false
-      }));
+      .map(file => processTrip(file, false));
 
     return [...ownedTrips, ...sharedTrips];
   } catch (error) {

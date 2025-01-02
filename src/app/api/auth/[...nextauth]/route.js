@@ -8,10 +8,14 @@ export const authOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       authorization: {
         params: {
-          scope: "openid email profile https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/drive",
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
+          scope: [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/userinfo.profile',
+            'openid',
+            'email',
+            'profile',
+          ].join(' '),
         },
       },
     }),

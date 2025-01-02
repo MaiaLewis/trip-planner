@@ -1,6 +1,6 @@
 
 import { getServerSession } from "next-auth/next";
-import SignInButton from "./components/SignInButton";
+import SignInButton from "./components/sign-in-button";
 
 export default async function Home() {
   const session = await getServerSession();

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Modal from '@/app/components/Modal'
+import Modal from '@/app/components/simple-modal'
 import { addTripCollaborator } from '@/utils/sheets'
 
 export default function ShareTripModal({ isOpen, onClose, spreadsheetId, accessToken }) {

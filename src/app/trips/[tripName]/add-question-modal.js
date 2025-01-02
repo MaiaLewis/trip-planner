@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Modal from '@/app/components/Modal'
+import Modal from '@/app/components/simple-modal'
 import { addSurveyQuestion } from '@/utils/sheets'
 
 export default function AddQuestionModal({ isOpen, onClose, onSuccess, spreadsheetId, accessToken }) {

@@ -296,7 +296,7 @@ export async function addTripCollaborator(accessToken, spreadsheetId, email) {
   }
 }
 
-export async function updateVote(accessToken, spreadsheetId, questionIndex, optionIndex, email) {
+export async function updateVote(accessToken, spreadsheetId, questionIndex, optionIndex, userName) {
   try {
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey`,
@@ -310,13 +310,11 @@ export async function updateVote(accessToken, spreadsheetId, questionIndex, opti
     const data = await response.json();
     const values = data.values || [];
 
-    // Find the actual row index for this question
     let currentQuestionIndex = -1;
     let questionStartRow = 0;
 
-    // Iterate through values to find the correct question
     for (let i = 0; i < values.length; i++) {
-      if (values[i][0]) { // This is a question row
+      if (values[i][0]) {
         currentQuestionIndex++;
         if (currentQuestionIndex === questionIndex) {
           questionStartRow = i;
@@ -325,25 +323,24 @@ export async function updateVote(accessToken, spreadsheetId, questionIndex, opti
       }
     }
 
-    // Remove voter's email from all options in this question
+    // Remove voter from all options in this question
     let currentRow = questionStartRow;
     while (currentRow < values.length && (!values[currentRow + 1]?.[0])) {
       if (values[currentRow][2]) {
-        const voters = values[currentRow][2].split(',').map(e => e.trim());
-        values[currentRow][2] = voters.filter(v => v !== email).join(',');
+        const voters = values[currentRow][2].split(',').map(v => v.trim());
+        values[currentRow][2] = voters.filter(v => v !== userName).join(',');
       }
       currentRow++;
     }
 
-    // Add voter's email to selected option
+    // Add voter to selected option
     const targetRow = questionStartRow + optionIndex;
     if (!values[targetRow][2] || values[targetRow][2] === '') {
-      values[targetRow][2] = email;
+      values[targetRow][2] = userName;
     } else {
-      values[targetRow][2] = `${values[targetRow][2]},${email}`;
+      values[targetRow][2] = `${values[targetRow][2]},${userName}`;
     }
 
-    // Update the sheet
     await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey!A1:D${values.length}?valueInputOption=RAW`,
       {

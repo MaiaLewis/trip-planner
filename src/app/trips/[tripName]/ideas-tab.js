@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import AddQuestionModal from './add-question-modal'
 import { getSurveyQuestions, updateVote } from '@/utils/sheets'
-import UserAvatar from '@/app/components/UserAvatar'
+import UserAvatar from '@/app/components/user-avatar'
 
 export default function IdeasTab({ spreadsheetId }) {
   const { data: session } = useSession()
@@ -54,7 +54,7 @@ export default function IdeasTab({ spreadsheetId }) {
         spreadsheetId,
         questionIndex,
         optionIndex,
-        session.user.email
+        session.user.name
       );
       await fetchQuestions();
     } catch (error) {
@@ -72,13 +72,13 @@ export default function IdeasTab({ spreadsheetId }) {
     const newSelectedOptions = {};
     questions.forEach((question, qIndex) => {
       question.options.forEach((option, oIndex) => {
-        if (option.voters.includes(session?.user?.email)) {
+        if (option.voters.includes(session?.user?.name)) {
           newSelectedOptions[qIndex] = oIndex;
         }
       });
     });
     setSelectedOptions(newSelectedOptions);
-  }, [questions, session?.user?.email]);
+  }, [questions, session?.user?.name]);
 
   return (
     <div>
@@ -120,9 +120,9 @@ export default function IdeasTab({ spreadsheetId }) {
                     </div>
                     {option.voters.length > 0 && (
                       <div className="flex -space-x-1">
-                        {option.voters.map((email, i) => (
-                          <div key={i} className="relative" title={email}>
-                            <UserAvatar email={email} />
+                        {option.voters.map((name, i) => (
+                          <div key={i} className="relative" title={name}>
+                            <UserAvatar name={name} />
                           </div>
                         ))}
                       </div>

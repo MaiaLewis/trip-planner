@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { addTrip } from '@/utils/sheets'
-import Modal from '@/app/components/Modal'
+import Modal from '@/app/components/simple-modal'
 
 export default function AddTripModal({ isOpen, onClose, onSuccess }) {
   const { data: session } = useSession()

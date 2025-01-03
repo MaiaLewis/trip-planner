@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import AddQuestionModal from './add-question-modal'
 import { getSurveyQuestions, updateVote } from '@/utils/sheets'
 import UserAvatar from '@/app/components/user-avatar'
+import StickyNote from '@/app/components/sticky-note'
 
 export default function IdeasTab({ spreadsheetId }) {
   const { data: session } = useSession()
@@ -81,67 +82,84 @@ export default function IdeasTab({ spreadsheetId }) {
   }, [questions, session?.user?.name]);
 
   return (
-    <div>
+    <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Add Question
+        </button>
+      </div>
 
-
-      {isLoading ? (
-        <div className="text-gray-500">Loading...</div>
-      ) : error ? (
-        <div className="text-red-500">{error}</div>
-      ) : questions.length > 0 ? (
-        <div className="space-y-6">
-          {questions.map((q, index) => (
-            <div key={index} className="bg-gray-100 p-4 rounded-lg text-sm">
-              <h3 className="font-medium mb-3">{q.question}</h3>
-              <div className="space-y-2 pl-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {questions.map((q, index) => (
+          <StickyNote
+            key={index}
+            creator={q.creator || 'Anonymous'}
+            className="h-full"
+          >
+            <div className="space-y-4">
+              <div className="font-medium">{q.question}</div>
+              <div className="space-y-2">
                 {q.options.map((option, optIndex) => (
-                  <div key={optIndex} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        name={`question-${index}`}
-                        id={`option-${index}-${optIndex}`}
-                        className="text-blue-500"
-                        checked={selectedOptions[index] === optIndex}
-                        onChange={() => handleVote(index, optIndex)}
-                        disabled={isVoting}
-                      />
-                      <label htmlFor={`option-${index}-${optIndex}`}>
-                        {option.text}
-                      </label>
-                    </div>
-                    {option.voters.length > 0 && (
-                      <div className="flex -space-x-1">
-                        {option.voters.map((name, i) => (
-                          <div key={i} className="relative" title={name}>
-                            <UserAvatar name={name} />
-                          </div>
-                        ))}
+                  <button
+                    key={optIndex}
+                    onClick={() => handleVote(index, optIndex)}
+                    className={`w-full text-left p-2 rounded ${
+                      option.voters.includes(session?.user?.name)
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-50 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">{option.label}</span>
+                        <div className="flex -space-x-1">
+                          {option.voters.map((voter, i) => (
+                            <div key={i} className="relative" title={voter}>
+                              <UserAvatar name={voter} />
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    )}
-                  </div>
+                      
+                      {option.details && (
+                        <p className="text-sm text-gray-600">{option.details}</p>
+                      )}
+                      
+                      <div className="flex gap-2 text-sm">
+                        {option.link && (
+                          <a 
+                            href={option.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View Link
+                          </a>
+                        )}
+                        {option.image && (
+                          <a 
+                            href={option.image}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-600"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            View Image
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
-          ))}
-          <button
-          onClick={() => setIsModalOpen(true)}
-          className="text-sm text-blue-500 font-bold hover:text-blue-600 flex items-center"
-        >
-          <span className="mr-2">+</span> Question
-        </button>
-        </div>
-      ) : (
-        <div>
-        <p className="text-gray-600 py-6">No questions yet. Add your first question!</p>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="text-sm text-blue-500 font-bold hover:text-blue-600 flex items-center"
-        >
-          <span className="mr-2">+</span> Question
-        </button>
-        </div>
-      )}
+          </StickyNote>
+        ))}
+      </div>
 
       <AddQuestionModal 
         isOpen={isModalOpen}

@@ -1,13 +1,23 @@
-"use client";
-
 import "./globals.css";
-import { SessionProvider } from "next-auth/react";
+import { Providers } from './providers'
+import Script from 'next/script'
+
+export const metadata = {
+  title: 'Trip Planner',
+  description: 'Plan your next trip with friends',
+}
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <Script 
+          src="https://kit.fontawesome.com/71d4c3d338.js" 
+          crossOrigin="anonymous"
+        />
+      </head>
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

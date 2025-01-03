@@ -87,11 +87,6 @@ export async function addTrip(accessToken, tripData) {
               properties: {
                 title: 'Survey'
               }
-            },
-            {
-              properties: {
-                title: 'Collaborators'
-              }
             }
           ],
         }),
@@ -109,7 +104,7 @@ export async function addTrip(accessToken, tripData) {
   }
 }
 
-export async function addSurveyQuestion(accessToken, spreadsheetId, question, options) {
+export async function addSurveyQuestion(accessToken, spreadsheetId, question, options, creator) {
   try {
     // First check if the Survey sheet exists
     const getResponse = await fetch(
@@ -153,10 +148,26 @@ export async function addSurveyQuestion(accessToken, spreadsheetId, question, op
       );
     }
 
-    // Format the data with question in first column and options in second column
+    // Format the data with all columns
     const values = [
-      [question, options[0], ''], // First row has question and first option
-      ...options.slice(1).map(option => ['', option, '']) // Subsequent rows have just the options
+      [
+        question,           // A: Question
+        options[0].label,   // B: Option label
+        options[0].details || '', // C: Option details
+        options[0].link || '',    // D: Link URL
+        options[0].image || '',   // E: Image URL
+        '',                       // F: Voters (empty initially)
+        creator                   // G: Creator
+      ],
+      ...options.slice(1).map(option => [
+        '',                      // A: Empty (no question)
+        option.label,            // B: Option label
+        option.details || '',    // C: Option details
+        option.link || '',       // D: Link URL
+        option.image || '',      // E: Image URL
+        '',                      // F: Voters (empty initially)
+        ''                       // G: Empty (no creator)
+      ])
     ];
 
     // Then append the question and options
@@ -208,15 +219,22 @@ export async function getSurveyQuestions(accessToken, spreadsheetId) {
         }
         currentQuestion = {
           question: row[0],
+          creator: row[6] || null, // Creator moved to column G
           options: [{
-            text: row[1],
-            voters: row[2] ? row[2].split(',').map(email => email.trim()) : []
+            label: row[1],
+            details: row[2] || null,
+            link: row[3] || null,
+            image: row[4] || null,
+            voters: row[5] ? row[5].split(',').map(voter => voter.trim()) : []
           }]
         };
       } else if (row[1] && currentQuestion) { // This is an option row
         currentQuestion.options.push({
-          text: row[1],
-          voters: row[2] ? row[2].split(',').map(email => email.trim()) : []
+          label: row[1],
+          details: row[2] || null,
+          link: row[3] || null,
+          image: row[4] || null,
+          voters: row[5] ? row[5].split(',').map(voter => voter.trim()) : []
         });
       }
     });
@@ -341,23 +359,23 @@ export async function updateVote(accessToken, spreadsheetId, questionIndex, opti
     // Remove voter from all options in this question
     let currentRow = questionStartRow;
     while (currentRow < values.length && (!values[currentRow + 1]?.[0])) {
-      if (values[currentRow][2]) {
-        const voters = values[currentRow][2].split(',').map(v => v.trim());
-        values[currentRow][2] = voters.filter(v => v !== userName).join(',');
+      if (values[currentRow][5]) { // Column F (index 5) is now for voters
+        const voters = values[currentRow][5].split(',').map(v => v.trim());
+        values[currentRow][5] = voters.filter(v => v !== userName).join(',');
       }
       currentRow++;
     }
 
     // Add voter to selected option
     const targetRow = questionStartRow + optionIndex;
-    if (!values[targetRow][2] || values[targetRow][2] === '') {
-      values[targetRow][2] = userName;
+    if (!values[targetRow][5] || values[targetRow][5] === '') {
+      values[targetRow][5] = userName;
     } else {
-      values[targetRow][2] = `${values[targetRow][2]},${userName}`;
+      values[targetRow][5] = `${values[targetRow][5]},${userName}`;
     }
 
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey!A1:D${values.length}?valueInputOption=RAW`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey!A1:G${values.length}?valueInputOption=RAW`,
       {
         method: 'PUT',
         headers: {

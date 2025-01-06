@@ -41,22 +41,22 @@ export default function TripPage({ params }) {
   const tripName = decodeURIComponent(tripParams.tripName)
 
   return (
-    <div>
-      <div className="sticky top-0 z-50 bg-white border-b px-8 pt-4">
-        <div className="flex justify-between items-center mb-2">
+    <div className="bg-[#000E40] h-full">
+      <div className="sticky bg-[#000E40] top-0 z-50 px-8 pt-8 pb-4">
+        <div className="flex justify-between items-center mb-4">
           <div className="flex items-center space-x-4">
-            <Link href="/trips" className="text-gray-600 hover:text-gray-800">
+            <Link href="/trips" className="text-white cursor-pointer hover:opacity-70">
               <i className="fa-solid fa-chevron-left text-xs"></i>
             </Link>
-            <h1 className="text-md font-bold">{tripName}</h1>
+            <h1 className="text-2xl font-bold text-white">{tripName}</h1>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <div className="flex items-center">
               <div className="flex -space-x-2 mr-2">
                 {tripDetails?.owner && (
                   <div className="relative" title={`Owner: ${tripDetails.owner.name}`}>
-                    <UserAvatar name={tripDetails.owner.name} />
+                    <UserAvatar name={tripDetails.owner.name} size={30}/>
                   </div>
                 )}
                 {tripDetails?.sharedWith?.slice(0, 3).map((user) => (
@@ -65,7 +65,7 @@ export default function TripPage({ params }) {
                     className="relative"
                     title={user.name}
                   >
-                    <UserAvatar name={user.name} />
+                    <UserAvatar name={user.name} size={30}/>
                   </div>
                 ))}
               </div>
@@ -78,21 +78,21 @@ export default function TripPage({ params }) {
             
             <button
               onClick={() => setIsShareModalOpen(true)}
-              className="flex space-x-2 items-center px-2 py-1 justify-center text-blue-500 bg-blue-100 rounded-full hover:bg-blue-200"
+              className="h-8 w-8 items-center justify-center text-blue-500 bg-blue-100 rounded-full hover:bg-blue-200"
               title="Share trip"
             >
-              <i className="fa-solid fa-user-plus text-xs"></i><span className="text-xs">Add user</span>
+              <i className="fa-solid fa-user-plus text-xs"></i><span className="text-xs"></span>
             </button>
           </div>
         </div>
-        <nav className="flex space-x-4 bg-white">
+        <nav className="flex space-x-4 text-white font-bold">
           <button
             onClick={() => setActiveTab('ideas')}
             className={`
                 px-4 py-2 text-sm
                 ${activeTab === 'ideas'
-                ? 'font-bold border-b-2 border-blue-500 text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'}
+                ? 'bg-white bg-opacity-20 rounded-full'
+                : 'hover:opacity-70'}
                 `}
           >
             Idea Board
@@ -102,8 +102,8 @@ export default function TripPage({ params }) {
             className={`
                 px-4 py-2 text-sm
                 ${activeTab === 'itinerary'
-                ? 'font-bold border-b-2 border-blue-500 text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'}
+                ? 'bg-white bg-opacity-20 rounded-full'
+                : 'hover:opacity-70'}
                 `}
           >
             Itinerary
@@ -112,7 +112,7 @@ export default function TripPage({ params }) {
       </div>
 
       {/* Tab content */}
-      <div className="m-8">
+      <div className="mx-8 bg-white rounded-lg h-screen p-8">
         {activeTab === 'ideas' ? (
           <IdeasTab spreadsheetId={spreadsheetId} />
         ) : (

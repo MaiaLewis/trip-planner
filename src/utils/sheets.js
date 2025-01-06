@@ -104,8 +104,10 @@ export async function addTrip(accessToken, tripData) {
   }
 }
 
-export async function addSurveyQuestion(accessToken, spreadsheetId, question, options, creator) {
+export async function addSurveyQuestion(accessToken, spreadsheetId, question, options = [], creator) {
   try {
+    console.log('Adding survey question:', { question, options, creator });
+    
     // First check if the Survey sheet exists
     const getResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}`,
@@ -151,24 +153,30 @@ export async function addSurveyQuestion(accessToken, spreadsheetId, question, op
     // Format the data with all columns
     const values = [
       [
-        question,           // A: Question
-        options[0].label,   // B: Option label
-        options[0].details || '', // C: Option details
-        options[0].link || '',    // D: Link URL
-        options[0].image || '',   // E: Image URL
-        '',                       // F: Voters (empty initially)
-        creator                   // G: Creator
-      ],
-      ...options.slice(1).map(option => [
-        '',                      // A: Empty (no question)
-        option.label,            // B: Option label
-        option.details || '',    // C: Option details
-        option.link || '',       // D: Link URL
-        option.image || '',      // E: Image URL
-        '',                      // F: Voters (empty initially)
-        ''                       // G: Empty (no creator)
-      ])
+        question,                    // A: Question
+        options[0]?.label || '',     // B: Option label
+        options[0]?.details || '',   // C: Option details
+        options[0]?.link || '',      // D: Link URL
+        options[0]?.image || '',     // E: Image URL
+        '',                          // F: Voters (empty initially)
+        creator                      // G: Creator
+      ]
     ];
+
+    // Only add additional rows if there are more options
+    if (options.length > 1) {
+      values.push(
+        ...options.slice(1).map(option => [
+          '',                         // A: Empty (no question)
+          option?.label || '',        // B: Option label
+          option?.details || '',      // C: Option details
+          option?.link || '',         // D: Link URL
+          option?.image || '',        // E: Image URL
+          '',                         // F: Voters (empty initially)
+          ''                          // G: Empty (no creator)
+        ])
+      );
+    }
 
     // Then append the question and options
     const appendResponse = await fetch(
@@ -185,7 +193,13 @@ export async function addSurveyQuestion(accessToken, spreadsheetId, question, op
       }
     );
 
-    return appendResponse.json();
+    if (!appendResponse.ok) {
+      throw new Error(`Failed to append question: ${appendResponse.statusText}`);
+    }
+
+    const result = await appendResponse.json();
+    console.log('Append response:', result);
+    return result;
   } catch (error) {
     console.error('Error adding survey question:', error);
     throw error;
@@ -356,22 +370,22 @@ export async function updateVote(accessToken, spreadsheetId, questionIndex, opti
       }
     }
 
-    // Remove voter from all options in this question
-    let currentRow = questionStartRow;
-    while (currentRow < values.length && (!values[currentRow + 1]?.[0])) {
-      if (values[currentRow][5]) { // Column F (index 5) is now for voters
-        const voters = values[currentRow][5].split(',').map(v => v.trim());
-        values[currentRow][5] = voters.filter(v => v !== userName).join(',');
-      }
-      currentRow++;
-    }
-
-    // Add voter to selected option
+    // Toggle vote for the selected option
     const targetRow = questionStartRow + optionIndex;
-    if (!values[targetRow][5] || values[targetRow][5] === '') {
-      values[targetRow][5] = userName;
+    if (values[targetRow][5]) { // Column F (index 5) is for voters
+      const voters = values[targetRow][5].split(',').map(v => v.trim());
+      const hasVoted = voters.includes(userName);
+      
+      if (hasVoted) {
+        // Remove vote
+        values[targetRow][5] = voters.filter(v => v !== userName).join(',');
+      } else {
+        // Add vote
+        values[targetRow][5] = voters.length > 0 ? `${values[targetRow][5]},${userName}` : userName;
+      }
     } else {
-      values[targetRow][5] = `${values[targetRow][5]},${userName}`;
+      // First vote for this option
+      values[targetRow][5] = userName;
     }
 
     await fetch(
@@ -391,6 +405,105 @@ export async function updateVote(accessToken, spreadsheetId, questionIndex, opti
     return true;
   } catch (error) {
     console.error('Error updating vote:', error);
+    throw error;
+  }
+}
+
+export async function addNewQuestion(accessToken, spreadsheetId, questionData) {
+  const { question, options = [], creator, index } = questionData; // Add default empty array
+  
+  try {
+    console.log('Adding new question:', { question, options, creator, index });
+    
+    // If index exists, we're updating an existing question
+    if (index !== undefined) {
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      const values = data.values || [];
+
+      // Find the start row of the question we want to update
+      let currentQuestionIndex = -1;
+      let questionStartRow = 0;
+      let nextQuestionRow = values.length;
+
+      for (let i = 0; i < values.length; i++) {
+        if (values[i][0]) {
+          currentQuestionIndex++;
+          if (currentQuestionIndex === index) {
+            questionStartRow = i;
+          } else if (currentQuestionIndex === index + 1) {
+            nextQuestionRow = i;
+            break;
+          }
+        }
+      }
+
+      // Create new values array for the question and its options
+      const newValues = [
+        [
+          question,           // A: Question
+          options[0]?.label || '',   // B: Option label
+          options[0]?.details || '', // C: Option details
+          options[0]?.link || '',    // D: Link URL
+          options[0]?.image || '',   // E: Image URL
+          options[0]?.voters?.join(',') || '',  // F: Voters
+          creator            // G: Creator
+        ],
+        ...options.slice(1).map(option => [
+          '',               // A: Empty (no question)
+          option?.label || '',     // B: Option label
+          option?.details || '', // C: Option details
+          option?.link || '',    // D: Link URL
+          option?.image || '',   // E: Image URL
+          option?.voters?.join(',') || '', // F: Voters
+          ''               // G: Empty (no creator)
+        ])
+      ];
+
+      // Calculate the range based on the number of rows we're updating
+      const numRows = newValues.length;
+      const startRow = questionStartRow + 1; // +1 because Sheets is 1-based
+      const endRow = startRow + numRows - 1;
+
+      // Update the range
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Survey!A${startRow}:G${endRow}?valueInputOption=RAW`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            values: newValues,
+            range: `Survey!A${startRow}:G${endRow}` // Add explicit range in the body
+          }),
+        }
+      );
+
+      return true;
+    }
+    
+    // Otherwise add new question
+    const result = await addSurveyQuestion(
+      accessToken,
+      spreadsheetId,
+      question,
+      options || [], // Ensure options is an array
+      creator
+    );
+    console.log('Add question result:', result);
+    return result;
+  } catch (error) {
+    console.error('Error in addNewQuestion:', error);
     throw error;
   }
 }

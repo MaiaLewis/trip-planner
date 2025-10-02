@@ -20,6 +20,37 @@ You can start editing the page by modifying `app/page.js`. The page auto-updates
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Authentication Setup (NextAuth + Google)
+
+This app uses NextAuth with Google OAuth to obtain a user access token for Google Drive/Sheets API calls.
+
+1. Create a Google Cloud project (or use an existing one) in the [Google Cloud Console](https://console.cloud.google.com/).
+2. Enable the following APIs:
+   - Google Drive API
+   - Google Sheets API
+3. Create OAuth 2.0 credentials (type: Web application) under APIs & Services → Credentials.
+   - Authorized JavaScript origins: `http://localhost:3000`
+   - Authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`
+4. Copy your Client ID and Client Secret.
+5. Create a `.env.local` file at the project root based on `.env.local.example`:
+
+```
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=replace-with-a-strong-random-string
+GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+```
+
+6. Restart the dev server after adding env vars.
+
+If you see `?error=OAuthSignin`, it usually means one of these is misconfigured:
+- Missing or incorrect `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` env vars
+- Missing `NEXTAUTH_URL` or it does not match the running origin
+- Redirect URI not added in Google console: must be `http://localhost:3000/api/auth/callback/google`
+- Missing `NEXTAUTH_SECRET`
+
+After signing in, you should be redirected to `/trips`. The app requests scopes for Drive and Sheets in `src/app/api/auth/[...nextauth]/route.js` so you can create and edit spreadsheets within your Google account.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
